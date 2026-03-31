@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OFDM サブキャリア生成デモ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #fafafa;
+      color: #2c2c2a;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      font-size: 28px;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #2c2c2a;
+    }
+    
+    .subtitle {
+      font-size: 14px;
+      color: #73726c;
+      margin-bottom: 2rem;
+    }
+    
+    h2 {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 2rem 0 1rem;
+      color: #2c2c2a;
+    }
+    
+    h3 {
+      font-size: 16px;
+      font-weight: 500;
+      margin: 1.5rem 0 0.75rem;
+      color: #2c2c2a;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      font-size: 14px;
+      color: #73726c;
+      min-width: 120px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: #e1e1dc;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2c2c2a;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2c2c2a;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .value-display {
+      font-size: 14px;
+      font-weight: 500;
+      min-width: 32px;
+      text-align: right;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+      background: #f1efe8;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: #73726c;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    
+    .subcarrier-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 2rem;
+    }
+    
+    .subcarrier-card {
+      background: white;
+      border: 0.5px solid rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    
+    .subcarrier-header {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    
+    .subcarrier-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .subcarrier-control label {
+      font-size: 12px;
+      min-width: 48px;
+    }
+    
+    .subcarrier-control input[type="range"] {
+      flex: 1;
+    }
+    
+    .subcarrier-control .value-display {
+      font-size: 12px;
+      min-width: 32px;
+    }
+    
+    .chart-container {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+    
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    
+    .description {
+      background: #f1efe8;
+      border-left: 3px solid #3266ad;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 4px;
+    }
+    
+    .description p {
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 0.5rem;
+    }
+    
+    .description p:last-child {
+      margin-bottom: 0;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e1e1dc;
+      }
+      
+      .container {
+        background: #2c2c2a;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      
+      h1, h2, h3 {
+        color: #e1e1dc;
+      }
+      
+      .subtitle {
+        color: #b4b2a9;
+      }
+      
+      label {
+        color: #b4b2a9;
+      }
+      
+      input[type="range"] {
+        background: #444441;
+      }
+      
+      input[type="range"]::-webkit-slider-thumb {
+        background: #e1e1dc;
+      }
+      
+      input[type="range"]::-moz-range-thumb {
+        background: #e1e1dc;
+      }
+      
+      .stat-card {
+        background: #3a3a38;
+      }
+      
+      .stat-label {
+        color: #b4b2a9;
+      }
+      
+      .subcarrier-card {
+        background: #2c2c2a;
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+      
+      .description {
+        background: #3a3a38;
+        border-left-color: #85b7eb;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>OFDM サブキャリア生成デモ</h1>
+    <p class="subtitle">逆離散フーリエ変換（IDFT）による直交周波数分割多重の可視化</p>
+    
+    <div class="description">
+      <p><strong>OFDMの原理：</strong>周波数領域で各サブキャリアに異なるデータ（振幅・位相）を割り当て、IDFTで時間領域の信号に変換します。各サブキャリアは互いに直交しているため、干渉なく同時に伝送できます。</p>
+      <p><strong>使い方：</strong>サブキャリア数を調整し、各サブキャリアの振幅と位相を変更して、時間領域の信号がどう変化するか観察してください。</p>
+    </div>
+    
+    <h2>パラメータ設定</h2>
+    
+    <div class="control-group">
+      <label>サブキャリア数</label>
+      <input type="range" min="4" max="16" value="8" step="1" id="numSubcarriers" />
+      <span class="value-display" id="numDisplay">8</span>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="stat-label">サンプル数</p>
+        <p class="stat-value" id="sampleCount">64</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">直交性</p>
+        <p class="stat-value">✓</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">変調方式</p>
+        <p class="stat-value">任意</p>
+      </div>
+    </div>
+    
+    <h3>サブキャリア設定</h3>
+    <div id="subcarrierControls" class="subcarrier-grid"></div>
+    
+    <h2>周波数領域（入力）</h2>
+    <div class="chart-container">
+      <div class="chart-wrapper" style="height: 240px;">
+        <canvas id="freqChart"></canvas>
+      </div>
+    </div>
+    
+    <h2>時間領域（IDFT後）</h2>
+    <div class="chart-container">
+      <div class="chart-wrapper" style="height: 280px;">
+        <canvas id="timeChart"></canvas>
+      </div>
+    </div>
+    
+    <h2>個別サブキャリア波形</h2>
+    <div class="chart-container">
+      <div class="chart-wrapper" style="height: 320px;">
+        <canvas id="subcarrierChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script>
+    const N = 64;
+    let numSubcarriers = 8;
+    let amplitudes = Array(16).fill(0);
+    let phases = Array(16).fill(0);
+
+    for (let i = 0; i < 8; i++) {
+      amplitudes[i] = 1;
+      phases[i] = 0;
+    }
+
+    let freqChart, timeChart, subcarrierChart;
+
+    const colors = [
+      '#3266ad', '#1d9e75', '#d85a30', '#d4537e',
+      '#ba7517', '#639922', '#534ab7', '#e24b4a',
+      '#378add', '#0f6e56', '#993c1d', '#993556',
+      '#854f0b', '#3b6d11', '#3c3489', '#a32d2d'
+    ];
+
+    function initCharts() {
+      const freqCtx = document.getElementById('freqChart').getContext('2d');
+      const timeCtx = document.getElementById('timeChart').getContext('2d');
+      const subcarrierCtx = document.getElementById('subcarrierChart').getContext('2d');
+
+      freqChart = new Chart(freqCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '振幅',
+            data: [],
+            backgroundColor: colors[0],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { 
+              title: { display: true, text: 'サブキャリアインデックス' },
+              grid: { display: false }
+            },
+            y: { 
+              beginAtZero: true, 
+              max: 1.5, 
+              title: { display: true, text: '振幅' }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      timeChart = new Chart(timeCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            { 
+              label: '実部', 
+              data: [], 
+              borderColor: colors[0], 
+              borderWidth: 2, 
+              pointRadius: 0, 
+              tension: 0,
+              fill: false
+            },
+            { 
+              label: '虚部', 
+              data: [], 
+              borderColor: colors[1], 
+              borderWidth: 2, 
+              pointRadius: 0, 
+              tension: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { 
+              title: { display: true, text: '時間サンプル' },
+              ticks: { maxTicksLimit: 16 }
+            },
+            y: { 
+              title: { display: true, text: '振幅' }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: { boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 12 } }
+            }
+          }
+        }
+      });
+
+      subcarrierChart = new Chart(subcarrierCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: []
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { 
+              title: { display: true, text: '時間サンプル' },
+              ticks: { maxTicksLimit: 16 }
+            },
+            y: { 
+              title: { display: true, text: '振幅' }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: { boxWidth: 10, boxHeight: 10, padding: 8, font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateControls() {
+      const container = document.getElementById('subcarrierControls');
+      container.innerHTML = '';
+      
+      for (let k = 0; k < numSubcarriers; k++) {
+        const card = document.createElement('div');
+        card.className = 'subcarrier-card';
+        
+        card.innerHTML = `
+          <div class="subcarrier-header" style="color: ${colors[k % colors.length]};">サブキャリア ${k}</div>
+          <div class="subcarrier-control">
+            <label>振幅</label>
+            <input type="range" min="0" max="1" step="0.1" value="${amplitudes[k]}" class="amp-slider" data-k="${k}" />
+            <span class="value-display amp-value">${amplitudes[k].toFixed(1)}</span>
+          </div>
+          <div class="subcarrier-control">
+            <label>位相</label>
+            <input type="range" min="0" max="360" step="15" value="${Math.round(phases[k])}" class="phase-slider" data-k="${k}" />
+            <span class="value-display phase-value">${Math.round(phases[k])}°</span>
+          </div>
+        `;
+        
+        container.appendChild(card);
+      }
+      
+      document.querySelectorAll('.amp-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const k = parseInt(e.target.dataset.k);
+          amplitudes[k] = parseFloat(e.target.value);
+          e.target.parentElement.querySelector('.amp-value').textContent = amplitudes[k].toFixed(1);
+          updateCharts();
+        });
+      });
+      
+      document.querySelectorAll('.phase-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const k = parseInt(e.target.dataset.k);
+          phases[k] = parseFloat(e.target.value);
+          e.target.parentElement.querySelector('.phase-value').textContent = Math.round(phases[k]) + '°';
+          updateCharts();
+        });
+      });
+    }
+
+    function idft(freq) {
+      const time = [];
+      for (let n = 0; n < N; n++) {
+        let real = 0;
+        let imag = 0;
+        for (let k = 0; k < freq.length; k++) {
+          const angle = 2 * Math.PI * k * n / N;
+          real += freq[k].real * Math.cos(angle) - freq[k].imag * Math.sin(angle);
+          imag += freq[k].real * Math.sin(angle) + freq[k].imag * Math.cos(angle);
+        }
+        time.push({ real: real / N, imag: imag / N });
+      }
+      return time;
+    }
+
+    function updateCharts() {
+      const freq = [];
+      for (let k = 0; k < numSubcarriers; k++) {
+        const phaseRad = phases[k] * Math.PI / 180;
+        freq.push({
+          real: amplitudes[k] * Math.cos(phaseRad),
+          imag: amplitudes[k] * Math.sin(phaseRad)
+        });
+      }
+      
+      const freqLabels = [];
+      const freqData = [];
+      for (let k = 0; k < numSubcarriers; k++) {
+        freqLabels.push(k.toString());
+        freqData.push(amplitudes[k]);
+      }
+      
+      freqChart.data.labels = freqLabels;
+      freqChart.data.datasets[0].data = freqData;
+      freqChart.update('none');
+      
+      const time = idft(freq);
+      
+      const timeLabels = [];
+      const realData = [];
+      const imagData = [];
+      for (let n = 0; n < N; n++) {
+        timeLabels.push(n.toString());
+        realData.push(time[n].real);
+        imagData.push(time[n].imag);
+      }
+      
+      timeChart.data.labels = timeLabels;
+      timeChart.data.datasets[0].data = realData;
+      timeChart.data.datasets[1].data = imagData;
+      timeChart.update('none');
+      
+      const subcarrierDatasets = [];
+      for (let k = 0; k < numSubcarriers; k++) {
+        if (amplitudes[k] > 0) {
+          const waveData = [];
+          const phaseRad = phases[k] * Math.PI / 180;
+          for (let n = 0; n < N; n++) {
+            const angle = 2 * Math.PI * k * n / N + phaseRad;
+            waveData.push(amplitudes[k] * Math.cos(angle));
+          }
+          subcarrierDatasets.push({
+            label: `k=${k}`,
+            data: waveData,
+            borderColor: colors[k % colors.length],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0,
+            fill: false
+          });
+        }
+      }
+      
+      subcarrierChart.data.labels = timeLabels;
+      subcarrierChart.data.datasets = subcarrierDatasets;
+      subcarrierChart.update('none');
+      
+      document.getElementById('sampleCount').textContent = N;
+    }
+
+    document.getElementById('numSubcarriers').addEventListener('input', (e) => {
+      numSubcarriers = parseInt(e.target.value);
+      document.getElementById('numDisplay').textContent = numSubcarriers;
+      
+      for (let i = 0; i < numSubcarriers; i++) {
+        if (amplitudes[i] === 0) amplitudes[i] = 1;
+      }
+      for (let i = numSubcarriers; i < 16; i++) {
+        amplitudes[i] = 0;
+        phases[i] = 0;
+      }
+      
+      updateControls();
+      updateCharts();
+    });
+
+    window.addEventListener('load', () => {
+      initCharts();
+      updateControls();
+      updateCharts();
+    });
+  </script>
+</body>
+</html>
